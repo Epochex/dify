@@ -10,7 +10,7 @@ import {
   ArrowUpRight,
 } from '@/app/components/base/icons/src/vender/line/arrows'
 import { ACCOUNT_SETTING_TAB } from '@/app/components/header/account-setting/constants'
-import { useAccountSetting } from '@/app/components/header/account-setting/hooks'
+import { useIntegrationsSetting } from '@/app/components/header/account-setting/use-integrations-setting'
 import { useModalContext } from '@/context/modal-context'
 import { useApiBasedExtensions } from '@/service/use-common'
 
@@ -25,7 +25,7 @@ const ApiBasedExtensionSelector: FC<ApiBasedExtensionSelectorProps> = ({
 }) => {
   const { t } = useTranslation()
   const [open, setOpen] = useState(false)
-  const openAccountSetting = useAccountSetting()
+  const openIntegrationsSetting = useIntegrationsSetting()
   const {
     setShowApiBasedExtensionModal,
   } = useModalContext()
@@ -84,7 +84,7 @@ const ApiBasedExtensionSelector: FC<ApiBasedExtensionSelectorProps> = ({
                 className="flex cursor-pointer items-center text-xs text-text-accent"
                 onClick={() => {
                   setOpen(false)
-                  openAccountSetting({ payload: ACCOUNT_SETTING_TAB.API_BASED_EXTENSION })
+                  openIntegrationsSetting({ payload: ACCOUNT_SETTING_TAB.API_BASED_EXTENSION })
                 }}
               >
                 {t('apiBasedExtension.selector.manage', { ns: 'common' })}
