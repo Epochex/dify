@@ -5,6 +5,7 @@ import type { ModalState, ModelModalType } from './modal-context'
 import type { OpeningStatement } from '@/app/components/base/features/types'
 import type { CreateExternalAPIReq } from '@/app/components/datasets/external-api/declarations'
 import type { AccountSettingTab } from '@/app/components/header/account-setting/constants'
+import type { NonMovedAccountSettingTab } from '@/app/components/header/account-setting/destinations'
 import type { ModelLoadBalancingModalProps } from '@/app/components/header/account-setting/model-provider-page/provider-added-card/model-load-balancing-modal'
 import type { UpdatePluginPayload } from '@/app/components/plugins/types'
 import type { InputVar } from '@/app/components/workflow/types'
@@ -13,11 +14,10 @@ import type { ApiBasedExtension, ExternalDataTool } from '@/models/common'
 import type { ModerationConfig, PromptVariable } from '@/models/debug'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import {
-
   DEFAULT_ACCOUNT_SETTING_TAB,
   isValidAccountSettingTab,
 } from '@/app/components/header/account-setting/constants'
-import { getMovedAccountSettingDestination } from '@/app/components/header/account-setting/destinations'
+import { getMovedAccountSettingDestination, isMovedAccountSettingTab } from '@/app/components/header/account-setting/destinations'
 import {
   EDUCATION_VERIFYING_LOCALSTORAGE_ITEM,
 } from '@/app/education-apply/constants'
@@ -86,11 +86,14 @@ export const ModalContextProvider = ({
   const [urlAccountModalState, setUrlAccountModalState] = useAccountSettingModal()
   const router = useRouter()
 
-  const accountSettingCallbacksRef = useRef<Omit<ModalState<AccountSettingTab>, 'payload'> | null>(null)
+  const accountSettingCallbacksRef = useRef<Omit<ModalState<NonMovedAccountSettingTab>, 'payload'> | null>(null)
   const accountSettingTab = urlAccountModalState.isOpen
     ? (isValidAccountSettingTab(urlAccountModalState.payload)
         ? urlAccountModalState.payload
         : DEFAULT_ACCOUNT_SETTING_TAB)
+    : null
+  const accountSettingModalTab = accountSettingTab && !isMovedAccountSettingTab(accountSettingTab)
+    ? accountSettingTab
     : null
   const [showApiBasedExtensionModal, setShowApiBasedExtensionModal] = useState<ModalState<ApiBasedExtension> | null>(null)
   const [showModerationSettingModal, setShowModerationSettingModal] = useState<ModalState<ModerationConfig> | null>(null)
@@ -123,9 +126,9 @@ export const ModalContextProvider = ({
     setUrlAccountModalState({ payload: tab })
   }, [setUrlAccountModalState])
 
-  const setShowAccountSettingModal = useCallback((next: SetStateAction<ModalState<AccountSettingTab> | null>) => {
-    const currentState = accountSettingTab
-      ? { payload: accountSettingTab, ...accountSettingCallbacksRef.current }
+  const setShowAccountSettingModal = useCallback((next: SetStateAction<ModalState<NonMovedAccountSettingTab> | null>) => {
+    const currentState = accountSettingModalTab
+      ? { payload: accountSettingModalTab, ...accountSettingCallbacksRef.current }
       : null
     const resolvedState = typeof next === 'function' ? next(currentState) : next
     if (!resolvedState) {
@@ -134,17 +137,9 @@ export const ModalContextProvider = ({
       return
     }
     const { payload, ...callbacks } = resolvedState
-    const movedDestination = getMovedAccountSettingDestination(payload)
-    if (movedDestination) {
-      accountSettingCallbacksRef.current = null
-      setUrlAccountModalState(null)
-      router.push(movedDestination)
-      return
-    }
-
     accountSettingCallbacksRef.current = callbacks
     setUrlAccountModalState({ payload })
-  }, [accountSettingTab, router, setUrlAccountModalState])
+  }, [accountSettingModalTab, setUrlAccountModalState])
 
   useEffect(() => {
     if (!urlAccountModalState.isOpen)
@@ -153,6 +148,9 @@ export const ModalContextProvider = ({
 
   useEffect(() => {
     if (!accountSettingTab)
+      return
+
+    if (!isMovedAccountSettingTab(accountSettingTab))
       return
 
     const movedDestination = getMovedAccountSettingDestination(accountSettingTab)
@@ -287,9 +285,9 @@ export const ModalContextProvider = ({
       <>
         {children}
         {
-          accountSettingTab && (
+          accountSettingModalTab && (
             <AccountSetting
-              activeTab={accountSettingTab}
+              activeTab={accountSettingModalTab}
               onCancelAction={handleCancelAccountSettingModal}
               onTabChangeAction={handleAccountSettingTabChange}
             />
