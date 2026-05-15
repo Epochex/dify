@@ -2,6 +2,7 @@
 Unit tests for Service API Index endpoint
 """
 
+from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -13,16 +14,12 @@ from controllers.service_api.index import IndexApi
 class TestIndexApi:
     """Test suite for IndexApi resource."""
 
-    @patch("controllers.service_api.index.dify_config", autospec=True)
-    def test_get_returns_api_info(self, mock_config, app: Flask):
+    def test_get_returns_api_info(self, app: Flask):
         """Test that GET returns API metadata with correct structure."""
         # Arrange
-        mock_config.project.version = "1.0.0-test"
+        mock_config = SimpleNamespace(project=SimpleNamespace(version="1.0.0-test"))
 
         # Act
-        with app.test_request_context("/", method="GET"):
-            index_api = IndexApi()
-            response = index_api.get()
         with patch("controllers.service_api.index.dify_config", mock_config):
             with app.test_request_context("/", method="GET"):
                 index_api = IndexApi()
